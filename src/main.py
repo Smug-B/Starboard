@@ -1,15 +1,10 @@
 import asyncio
 import datetime
-import os
 from typing import List, Tuple, Dict
 
 import discord
 from discord import TextChannel, Embed, ApplicationContext, Interaction
 from discord.ui import Button, Item
-
-import sys
-sys.path.append("C:/Users/smugb/Documents/Projects/Starboard")
-sys.path.append("C:/Users/smugb/Documents/Projects/Starboard/src")
 
 from src.features.starboard import Starboard
 
@@ -35,7 +30,6 @@ async def set(ctx: ApplicationContext, channel: discord.Option(TextChannel)):
         await ctx.respond(f"{text_channel.jump_url} has been designated as the server's starboard channel.")
     else:
         await ctx.respond(f"👅 𝔉𝔯𝔢𝔞𝔨𝔶 𝔐𝔬𝔡𝔢 𝔄𝔠𝔱𝔦𝔳𝔞𝔱𝔢𝔡; I'm gonna touch you {ctx.author.global_name} 👅.", ephemeral=True)
-
 
 
 class LeaderboardView(discord.ui.View):  # Create a class called MyView that subclasses discord.ui.View
@@ -121,9 +115,7 @@ class LeaderboardView(discord.ui.View):  # Create a class called MyView that sub
 
     @discord.ui.button(label="1", style=discord.ButtonStyle.grey, custom_id="status", disabled=True)
     async def current_status(self, button: Button, interaction: Interaction):
-        await interaction.response.send_message(
-            "https://preview.redd.it/d1ez4tho3jmc1.jpg?width=1290&format=pjpg&auto=webp&s"
-            "=d5bdc8a5de19265bb56be1ca89b0ce1c8edd7d48")
+        await interaction.response.defer()
 
     @discord.ui.button(label=">", style=discord.ButtonStyle.grey, custom_id="next")
     async def next_page(self, button: Button, interaction: Interaction):
@@ -179,6 +171,7 @@ token: str
 with open("token.txt", "r") as file:
     token = file.readline()
 
+
 async def main():
     async with client:
         client.listen.start()
@@ -186,4 +179,3 @@ async def main():
 
 
 asyncio.run(main())
-
