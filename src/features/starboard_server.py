@@ -48,6 +48,7 @@ class StarboardServer:
         self.reaction_data = reaction_data
         self.experience_leaderboard = experience_leaderboard
         self.reaction_channel = reaction_channel
+        self.latest_reaction_time = datetime.now()
 
     def __str__(self):
         return f"[{self.server_ID}, {self.reaction_data}]"
@@ -71,7 +72,7 @@ class StarboardServer:
 
     def save_reaction_data(self):
         try:
-            if self.latest_reaction_time is None or (datetime.now() - self.latest_reaction_time).total_seconds() < 600:
+            if self.latest_reaction_time is None:
                 return
 
             save_dir: str = f"data/{self.server_ID}/"

@@ -62,7 +62,7 @@ class Starboard(commands.Bot):
             starboard_server = StarboardServer(payload.guild_id, BiDict(), {}, {})
             self.server_data[payload.guild_id] = starboard_server
 
-        starboard_server.last_reaction = datetime.now()
+        starboard_server.latest_reaction_time = datetime.now()
         starboard_server.reaction_channel[payload.message_id] = payload.channel_id
 
         data: tuple[Guild, int, channel, channel, Message] = await self.safe_get_data(payload)
@@ -87,7 +87,7 @@ class Starboard(commands.Bot):
     async def handle_auto_reacts(self, starboard_message: Message, reacted_message: Message):
         for reaction in reacted_message.reactions:
             if (reaction.count >= self.starboard_limiter and
-                    type(reaction.emoji) is str or self.get_emoji(reaction.emoji.id) is not None):
+                    (type(reaction.emoji) is str or self.get_emoji(reaction.emoji.id) is not None)):
                 await starboard_message.add_reaction(reaction.emoji)
 
     async def handle_react_starboard(self, payload: discord.RawReactionActionEvent,
@@ -180,6 +180,7 @@ class Starboard(commands.Bot):
         starboard_server.reaction_data[payload.message_id] = message.id
         await self.handle_auto_reacts(message, reacted_message)
         await self.update_server_experience(starboard_server, reacted_message, experience)
+        starboard_server.save_reaction_data()
 
     async def on_raw_reaction_remove(self, payload: discord.RawReactionActionEvent):
         starboard_server: StarboardServer = self.server_data.get(payload.guild_id)
@@ -187,7 +188,7 @@ class Starboard(commands.Bot):
             starboard_server = StarboardServer(payload.guild_id, BiDict(), {}, {})
             self.server_data[payload.guild_id] = starboard_server
 
-        starboard_server.last_reaction = datetime.now()
+        starboard_server.latest_reaction_time = datetime.now()
 
         cached_message_id: int = starboard_server.reaction_data.f_get(payload.message_id)
         if cached_message_id is None:
@@ -216,7 +217,8 @@ class Starboard(commands.Bot):
         await message.edit(content=showcase_message,
                            embeds=embed)
 
-        await self.update_server_experience(starboard_server, message, experience)
+        await self.update_server_experience(starboard_server, reacted_message, experience)
+        starboard_server.save_reaction_data()
 
     async def update_server_experience(self, starboard_server: StarboardServer, reacted_message: Message,
                                        experience: int):
@@ -267,9 +269,10 @@ class Starboard(commands.Bot):
             has_set_embed: bool = False
             if attachment_count == 0:
                 if embed_count > 0:
-                    image_url: str = handled_message.embeds[0].image \
-                        if handled_message.embeds[0].image is not None else handled_message.embeds[0].url
-                    handled_embed.set_image(url=image_url)
+                    if handled_message.embeds[0].image is not None:
+                        handled_embed.set_image(url=handled_message.embeds[0].image.proxy_url)
+                    else:
+                        handled_embed.set_image(url=handled_message.embeds[0].url)
                     has_set_embed = True
                 output.append(handled_embed)
 
