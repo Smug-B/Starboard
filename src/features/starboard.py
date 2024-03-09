@@ -114,9 +114,9 @@ class Starboard(commands.Bot):
         if message is None:
             return
 
-        embed: List[Embed] = await self.create_embed(reacted_message, guild)
-        showcase_message, experience = await self.format_emojis(reacted_message.reactions,
-                                                                message.reactions,
+        embed: List[Embed] = await self.create_embed(message, guild)
+        showcase_message, experience = await self.format_emojis(message.reactions,
+                                                                reacted_message.reactions,
                                                                 self.starboard_limiter,
                                                                 message.author.id)
         if showcase_message is not None:
@@ -138,11 +138,11 @@ class Starboard(commands.Bot):
         :param reacted_message:
         :return:
         """
-        embed: List[Embed] = await self.create_embed(reacted_message, guild)
         message = await starboard_channel.fetch_message(starboard_message_id)
         if message is None:
             return
 
+        embed: List[Embed] = await self.create_embed(reacted_message, guild)
         showcase_message, experience = await self.format_emojis(reacted_message.reactions,
                                                                 message.reactions,
                                                                 self.starboard_limiter,
@@ -190,34 +190,21 @@ class Starboard(commands.Bot):
 
         starboard_server.latest_reaction_time = datetime.now()
 
-        cached_message_id: int = starboard_server.reaction_data.f_get(payload.message_id)
-        if cached_message_id is None:
-            return
-
         data: tuple[Guild, int, channel, channel, Message] = await self.safe_get_data(payload)
         if data is None:
             return
 
         guild, starboard_channel_id, starboard_channel, message_channel, reacted_message = data
 
-        if payload.user_id == reacted_message.author.id or reacted_message.author.id == self.application_id:
-            return
-
-        embed: List[Embed] = await self.create_embed(reacted_message, guild)
-        message: Message = await starboard_channel.fetch_message(cached_message_id)
-        if message is None:
-            return
-        showcase_message, experience = await self.format_emojis(reacted_message.reactions,
-                                                                message.reactions,
-                                                                self.starboard_limiter,
-                                                                reacted_message.author.id)
-        if showcase_message is None:
-            return
-
-        await message.edit(content=showcase_message,
-                           embeds=embed)
-
-        await self.update_server_experience(starboard_server, reacted_message, experience)
+        if payload.user_id != self.application_id and payload.message_id in starboard_server.reaction_data.backward:
+            await self.handle_react_starboard(payload, starboard_server, guild, payload.message_id, reacted_message)
+        else:
+            cached_message_id: int = starboard_server.reaction_data.f_get(payload.message_id)
+            if cached_message_id is None:
+                return
+            else:
+                await self.handle_edit_starboard(starboard_server, guild, starboard_channel, cached_message_id,
+                                                 reacted_message)
         starboard_server.save_reaction_data()
 
     async def update_server_experience(self, starboard_server: StarboardServer, reacted_message: Message,
