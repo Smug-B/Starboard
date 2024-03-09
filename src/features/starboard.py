@@ -114,12 +114,16 @@ class Starboard(commands.Bot):
         if message is None:
             return
 
-        embed: List[Embed] = await self.create_embed(message, guild)
+        embed: List[Embed]
+        attachments: List[str]
+        embed, attachments = await self.create_embed(message, guild)
         showcase_message, experience = await self.format_emojis(message.reactions,
                                                                 reacted_message.reactions,
                                                                 self.starboard_limiter,
                                                                 message.author.id)
         if showcase_message is not None:
+            if len(attachments) > 0:
+                showcase_message += "\n" + " ".join(attachments)
             await reacted_message.edit(content=showcase_message, embeds=embed)
 
         await self.update_server_experience(starboard_server, message, experience)
@@ -142,12 +146,16 @@ class Starboard(commands.Bot):
         if message is None:
             return
 
-        embed: List[Embed] = await self.create_embed(reacted_message, guild)
+        embed: List[Embed]
+        attachments: List[str]
+        embed, attachments = await self.create_embed(reacted_message, guild)
         showcase_message, experience = await self.format_emojis(reacted_message.reactions,
                                                                 message.reactions,
                                                                 self.starboard_limiter,
                                                                 reacted_message.author.id)
         if showcase_message is not None:
+            if len(attachments) > 0:
+                showcase_message += "\n" + " ".join(attachments)
             await message.edit(content=showcase_message, embeds=embed)
 
         await self.handle_auto_reacts(message, reacted_message)
@@ -168,13 +176,18 @@ class Starboard(commands.Bot):
         :param reacted_message:
         :return:
         """
-        embed: List[Embed] = await self.create_embed(reacted_message, guild)
+        embed: List[Embed]
+        attachments: List[str]
+        embed, attachments = await self.create_embed(reacted_message, guild)
         showcase_message, experience = await self.format_emojis(reacted_message.reactions,
                                                                 None,
                                                                 self.starboard_limiter,
                                                                 reacted_message.author.id)
         if showcase_message is None:
             return
+
+        if len(attachments) > 0:
+            showcase_message += "\n" + " ".join(attachments)
 
         message = await starboard_channel.send(content=showcase_message, embeds=embed)
         starboard_server.reaction_data[payload.message_id] = message.id
@@ -247,8 +260,9 @@ class Starboard(commands.Bot):
             return output[:-2] + f" **|** {post_reactions[0].message.jump_url}", experience
         return None, experience
 
-    async def create_embed(self, message: discord.Message, guild: Guild) -> List[Embed]:
+    async def create_embed(self, message: discord.Message, guild: Guild) -> (List[Embed], List[str]):
         output: List[Embed] = []
+        attachment_output: List[str] = []
 
         def handle_multiple_attachments(handled_message: discord.Message, handled_embed: discord.Embed):
             attachment_count: int = len(handled_message.attachments)
@@ -265,6 +279,10 @@ class Starboard(commands.Bot):
 
             for i in range(0, attachment_count):
                 attachment: Attachment = handled_message.attachments[i]
+                if attachment.content_type.startswith("video"):
+                    attachment_output.append(attachment.url)
+                    continue
+
                 if i == 0:
                     handled_embed.set_image(url=attachment.url)
                     output.append(handled_embed)
@@ -301,7 +319,7 @@ class Starboard(commands.Bot):
             timestamp=message.created_at,
             description=message.content)
         handle_multiple_attachments(message, embed)
-        return output
+        return output, attachment_output
 
     first_save: bool = True
 
