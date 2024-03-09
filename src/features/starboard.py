@@ -280,7 +280,11 @@ class Starboard(commands.Bot):
             for i in range(0, attachment_count):
                 attachment: Attachment = handled_message.attachments[i]
                 if attachment.content_type.startswith("video"):
-                    attachment_output.append(attachment.url)
+                    if i == 0:
+                        handled_embed.description += "\n \n" + attachment.url
+                        output.append(handled_embed)
+                    else:
+                        handled_embed.description += "\n" + attachment.url
                     continue
 
                 if i == 0:
