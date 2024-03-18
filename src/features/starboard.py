@@ -304,6 +304,8 @@ class Starboard(commands.Bot):
             try:
                 replied_message: Message = await message.channel.fetch_message(message.reference.message_id)
                 replied_author: Member = await guild.fetch_member(replied_message.author.id)
+                replied_message_content: str = replied_message.system_content \
+                    if replied_message.system_content is not "" else replied_message.content
                 replied_embed: Embed = discord.Embed(
                     color=0x2b2d31,
                     author=discord.EmbedAuthor(
@@ -311,12 +313,13 @@ class Starboard(commands.Bot):
                         url=replied_message.jump_url,
                         icon_url=replied_author.display_avatar.url),
                     timestamp=replied_message.created_at,
-                    description=replied_message.content)
+                    description=replied_message_content)
                 handle_multiple_attachments(replied_message, replied_embed)
             except Exception as exception:
                 logging.log(logging.ERROR, exception)
 
         message_author: Member = await guild.fetch_member(message.author.id)
+        message_content: str = message.system_content if message.system_content is not "" else message.content
         embed: Embed = discord.Embed(
             color=0x70aeff,
             author=discord.EmbedAuthor(
@@ -324,7 +327,7 @@ class Starboard(commands.Bot):
                 url=message.jump_url,
                 icon_url=message_author.display_avatar.url),
             timestamp=message.created_at,
-            description=message.content)
+            description=message_content)
         handle_multiple_attachments(message, embed)
         return output, attachment_output
 
