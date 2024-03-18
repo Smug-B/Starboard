@@ -301,17 +301,20 @@ class Starboard(commands.Bot):
                 output.append(message_embed)
 
         if message.reference is not None:
-            replied_message: Message = await message.channel.fetch_message(message.reference.message_id)
-            replied_author: Member = await guild.fetch_member(replied_message.author.id)
-            replied_embed: Embed = discord.Embed(
-                color=0x2b2d31,
-                author=discord.EmbedAuthor(
-                    name=f"Replying to {replied_author.display_name}",
-                    url=replied_message.jump_url,
-                    icon_url=replied_author.display_avatar.url),
-                timestamp=replied_message.created_at,
-                description=replied_message.content)
-            handle_multiple_attachments(replied_message, replied_embed)
+            try:
+                replied_message: Message = await message.channel.fetch_message(message.reference.message_id)
+                replied_author: Member = await guild.fetch_member(replied_message.author.id)
+                replied_embed: Embed = discord.Embed(
+                    color=0x2b2d31,
+                    author=discord.EmbedAuthor(
+                        name=f"Replying to {replied_author.display_name}",
+                        url=replied_message.jump_url,
+                        icon_url=replied_author.display_avatar.url),
+                    timestamp=replied_message.created_at,
+                    description=replied_message.content)
+                handle_multiple_attachments(replied_message, replied_embed)
+            except Exception as exception:
+                logging.log(logging.ERROR, exception)
 
         message_author: Member = await guild.fetch_member(message.author.id)
         embed: Embed = discord.Embed(
