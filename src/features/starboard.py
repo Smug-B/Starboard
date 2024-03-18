@@ -304,8 +304,8 @@ class Starboard(commands.Bot):
             try:
                 replied_message: Message = await message.channel.fetch_message(message.reference.message_id)
                 replied_author: Member = await guild.fetch_member(replied_message.author.id)
-                replied_message_content: str = replied_message.system_content \
-                    if replied_message.system_content is not "" else replied_message.content
+                replied_message_content: str = replied_message.system_content if replied_message.system_content != "" \
+                    else replied_message.content
                 replied_embed: Embed = discord.Embed(
                     color=0x2b2d31,
                     author=discord.EmbedAuthor(
@@ -319,7 +319,7 @@ class Starboard(commands.Bot):
                 logging.log(logging.ERROR, exception)
 
         message_author: Member = await guild.fetch_member(message.author.id)
-        message_content: str = message.system_content if message.system_content is not "" else message.content
+        message_content: str = message.system_content if message.system_content != "" else message.content
         embed: Embed = discord.Embed(
             color=0x70aeff,
             author=discord.EmbedAuthor(
